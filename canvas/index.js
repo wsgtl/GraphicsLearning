@@ -20,8 +20,17 @@ function drawTriangle(ctx) {
     ctx.fill(); //填充
     ctx.stroke(); //描线
 }
+/**画矩形 */
+function drawRect(ctx) {
+    ctx.strokeStyle = "#f00";
+    ctx.strokeRect(200, 200, 100, 100); //描线矩形
+    ctx.fillStyle = "#880";
+    ctx.fillRect(50, 50, 100, 100); //填充矩形
+    ctx.clearRect(100, 100, 130, 130); //清除矩形范围
+}
 function init() {
     var ctx = initCanvas();
-    drawTriangle(ctx);
+    // drawTriangle(ctx)
+    drawRect(ctx);
 }
 init();

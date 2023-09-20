@@ -20,9 +20,15 @@ function drawTriangle(ctx: CanvasRenderingContext2D){
     ctx.fill()//填充
     ctx.stroke()//描线
 }
-/**画正方形 */
-function drawRect(){
-    
+/**画矩形 */
+function drawRect(ctx: CanvasRenderingContext2D){
+    ctx.strokeStyle="#f00"
+    ctx.strokeRect(200,200,100,100)//描线矩形
+
+    ctx.fillStyle="#880"
+    ctx.fillRect(50,50,100,100)//填充矩形
+
+    ctx.clearRect(100,100,130,130)//清除矩形范围
 }
 
 
@@ -40,6 +46,7 @@ function drawRect(){
 
 function init(){
     const ctx=initCanvas()
-    drawTriangle(ctx)
+    // drawTriangle(ctx)
+    drawRect(ctx)
 }
 init()
