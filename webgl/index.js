@@ -89,5 +89,49 @@ function learn2() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
+/**练习3 立方体旋转和顶点索引回执 */
+function learn3() {
+    var gl = initWebgl();
+    var program = initShader(gl, "\n    attribute vec4 v_position;\n    void main(){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(30.0);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        mat4 m4x=mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        mat4 m4y=mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        mat4 m4z=mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n        gl_Position=m4z*m4x*m4y*v_position;\n        // gl_Position=m4z*v_position;\n    }\n    ", DefFragmentSHader);
+    var color = gl.getUniformLocation(program, "f_color");
+    gl.uniform4f(color, .5, .3, .7, .9);
+    var position = gl.getAttribLocation(program, 'v_position');
+    var pb = gl.createBuffer();
+    var data = new Float32Array([
+        0.5, 0.5, 0.5,
+        -0.5, 0.5, 0.5,
+        -0.5, -0.5, 0.5,
+        0.5, -0.5, 0.5,
+        0.5, 0.5, -0.5,
+        -0.5, 0.5, -0.5,
+        -0.5, -0.5, -0.5,
+        0.5, -0.5, -0.5, //顶点7
+    ]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position);
+    //创建顶点索引数组
+    var indexes = new Uint8Array([
+        //前四个点对应索引值
+        0, 1, 2, 3,
+        //后四个顶点对应索引值
+        4, 5, 6, 7,
+        //前后对应点对应索引值  
+        0, 4,
+        1, 5,
+        2, 6,
+        3, 7 //两个点绘制一条直线
+    ]);
+    var ipb = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ipb);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexes, gl.STATIC_DRAW);
+    gl.clearColor(.2, .3, .4, .5);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawElements(gl.LINE_LOOP, 4, gl.UNSIGNED_BYTE, 0); //LINE_LOOP模式绘制前四个点
+    gl.drawElements(gl.LINE_LOOP, 4, gl.UNSIGNED_BYTE, 4); //LINE_LOOP模式从第五个点开始绘制四个点
+    gl.drawElements(gl.LINES, 8, gl.UNSIGNED_BYTE, 8); //LINES模式绘制后8个点
+}
 // learn1()
-learn2();
+// learn2()
+learn3();
