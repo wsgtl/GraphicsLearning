@@ -78,13 +78,54 @@ function drawArcRect(ctx) {
     ctx.closePath();
     ctx.stroke();
 }
+/**画太阳系 */
+function drawSun(ctx) {
+    var sun = new Image();
+    var moon = new Image();
+    var earth = new Image();
+    sun.src = 'https://img.lovepik.com/element/40097/4339.png_300.png';
+    moon.src = 'https://www.freepnglogos.com/uploads/moon-png/moon-png-annual-celestial-overview-simone-matthews-18.png';
+    earth.src = 'https://www.freepnglogos.com/uploads/moon-png/moon-png-annual-celestial-overview-simone-matthews-18.png';
+    var w = 500;
+    var draw = function () {
+        ctx.clearRect(0, 0, w, w);
+        //画太阳
+        ctx.drawImage(sun, 0, 0, w, w);
+        //画轨道
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(0,255,0,0.5)";
+        ctx.arc(w / 2, w / 2, 200, 0, Math.PI * 2);
+        ctx.stroke();
+        //画地球
+        var allTime = 10 * 1000; //转一周时间
+        var time = (Date.now() % allTime) / allTime;
+        var angle = time * Math.PI * 2;
+        var ew = 40;
+        ctx.save();
+        ctx.translate(w / 2, w / 2);
+        ctx.rotate(angle);
+        ctx.translate(200, 0);
+        ctx.drawImage(earth, -ew / 2, -ew / 2, ew, ew);
+        ctx.save();
+        //画月球
+        var mw = 20;
+        ctx.rotate(angle * 2);
+        ctx.translate(50, 0);
+        ctx.drawImage(moon, -mw / 2, -mw / 2, mw, mw);
+        ctx.restore();
+        ctx.restore();
+        window.requestAnimationFrame(draw);
+    };
+    window.requestAnimationFrame(draw);
+}
 function init() {
     var ctx = initCanvas();
     // drawTriangle(ctx)
     // drawRect(ctx)
     // drawCircular(ctx)
     // drawEllipse(ctx)
-    drawBezier(ctx);
+    // drawBezier(ctx)
     // drawArcRect(ctx)
+    drawSun(ctx);
 }
 init();
