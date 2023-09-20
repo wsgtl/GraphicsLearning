@@ -118,6 +118,68 @@ function drawSun(ctx) {
     };
     window.requestAnimationFrame(draw);
 }
+/**练习transform */
+function transformLearn(ctx) {
+    ctx.font = 'italic 20px 宋体';
+    ctx.save();
+    ctx.transform(1, 0, 0, 1, 0, 0); //默认不移动，不缩放不旋转
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillStyle = "#fff";
+    ctx.fillText("默认", 0, 30);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(1, 0, 0, 1, 50, 50); //平移，只改最后两个参数
+    ctx.fillStyle = "#f00";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("平移", 0, 0);
+    ctx.restore();
+    var angle = Math.PI / 6;
+    var sin = Math.sin(angle);
+    var cos = Math.cos(angle);
+    ctx.save();
+    ctx.transform(cos, sin, -sin, cos, 120, 0); //旋转，改前面四个参数
+    ctx.fillStyle = "#0f0";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("旋转", 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(cos * 2, sin * 2, -sin * 0.8, cos * 0.8, 200, 0); //旋转加缩放，改前面四个参数，前两个参数乘以宽倍数，后两个乘以高倍数
+    ctx.fillStyle = "#00f";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("旋转加缩放", 0, 0);
+    ctx.restore();
+    var xq = Math.sin(Math.PI / 180 * 20);
+    ctx.save();
+    ctx.transform(1, xq, 0, 1, 0, 130); //斜切
+    ctx.fillStyle = "#880";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("斜切1", 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(1, -xq, 0, 1, 60, 130); //斜切
+    ctx.fillStyle = "#444";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("斜切2", 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(1, 0, xq, 1, 130, 100); //斜切
+    ctx.fillStyle = "#044";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("斜切3", 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(1, 0, -xq, 1, 250, 100); //斜切
+    ctx.fillStyle = "#440";
+    ctx.fillRect(0, 0, 50, 50);
+    ctx.fillText("斜切4", 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.transform(1, xq, 0.1, 1, 50, 200); //斜切
+    ctx.fillStyle = "#c4c";
+    ctx.fillRect(0, 0, 50, 200);
+    ctx.fillText("斜切5", 0, 0);
+    ctx.restore();
+}
 function init() {
     var ctx = initCanvas();
     // drawTriangle(ctx)
@@ -126,6 +188,7 @@ function init() {
     // drawEllipse(ctx)
     // drawBezier(ctx)
     // drawArcRect(ctx)
-    drawSun(ctx);
+    // drawSun(ctx)
+    transformLearn(ctx);
 }
 init();
