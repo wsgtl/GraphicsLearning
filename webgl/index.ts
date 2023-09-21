@@ -30,6 +30,16 @@ function initShader(gl: WebGLRenderingContext, vShaderSource: string, fShaderSou
     return program
 
 }
+/**传顶点数据 */
+function setData(gl: WebGLRenderingContext,program:WebGLProgram,name:string,data: BufferSource,size: GLint, type: GLenum, normalized: GLboolean=false, stride: GLsizei=0, offset: GLintptr=0){
+    const arg=gl.getAttribLocation(program,name)
+
+    const pb=gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER,pb)
+    gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW)
+    gl.vertexAttribPointer(arg,2,gl.FLOAT,false,0,0)
+    gl.enableVertexAttribArray(arg)
+}
 /**默认顶点着色器文本 */
 const DefVertexShader = `
     attribute vec4 v_position;
@@ -428,6 +438,10 @@ function learn5(){
         gl.clearColor(.2, .3, .4, .5)//每一帧都要刷新背景颜色
         gl.clear(gl.COLOR_BUFFER_BIT)
         gl.drawArrays(gl.TRIANGLES,0,36)//每一帧都要重绘
+
+        // gl.uniform3f(angle,50,angleY+10,0)
+        // gl.drawArrays(gl.TRIANGLES,0,36)//画另一个立方体
+
         window.requestAnimationFrame(()=>{t()})
     }
     t();
@@ -435,9 +449,108 @@ function learn5(){
 
 }
 
+/**练习6 纹理贴图和调整灰度和宏定义 */
+function learn6(){
+    const gl=initWebgl()
+    const isGrey=true;//利用预处理宏定义控制灰度显示
+    const fShader=(isGrey?" #define GREY true;\n":"")+
+    `
+    precision mediump float;
+    varying vec2 v_TexCoord;
+    uniform sampler2D u_Sampler;
+    void main(){
+        #ifdef GREY
+        //采集纹素
+        vec4 texture = texture2D(u_Sampler,v_TexCoord);
+        //计算RGB三个分量光能量之和，也就是亮度
+        float luminance = 0.299*texture.r+0.587*texture.g+0.114*texture.b;
+        //逐片元赋值，RGB相同均为亮度值，用黑白两色表达图片的明暗变化
+        gl_FragColor = vec4(luminance,luminance,luminance,texture.a);
+        return;
+        #endif
 
+        gl_FragColor = texture2D(u_Sampler,v_TexCoord);
+    }
+`
+    const program=initShader(gl, `
+    attribute vec4 v_position;
+    attribute vec2 a_TexCoord;//纹理坐标
+    varying vec2 v_TexCoord;
+    void main(){
+        gl_Position=v_position;
+        v_TexCoord=a_TexCoord;
+    }
+    `,fShader)  
+
+ 
+    //  四个顶点坐标数据data，z轴为零
+    //   定义纹理贴图在WebGL坐标系中位置
+
+    var data=new Float32Array([
+        -0.5, 0.5,//左上角——v0
+        -0.5,-0.5,//左下角——v1
+        0.5,  0.5,//右上角——v2
+        0.5, -0.5 //右下角——v3
+    ]);
+    
+     //创建UV纹理坐标数据textureData
+
+    var textureData = new Float32Array([
+        0,1,//左上角——uv0
+        0,0,//左下角——uv1
+        1,1,//右上角——uv2
+        1,0 //右下角——uv3
+    ]);
+
+    const position=gl.getAttribLocation(program,'v_position')
+    const texCoord=gl.getAttribLocation(program,'a_TexCoord')
+
+    const pb=gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER,pb)
+    gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW)
+    gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0)
+    gl.enableVertexAttribArray(position)
+
+    
+    const tpb=gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER,tpb)
+    gl.bufferData(gl.ARRAY_BUFFER,textureData,gl.STATIC_DRAW)
+    gl.vertexAttribPointer(texCoord,2,gl.FLOAT,false,0,0)
+    gl.enableVertexAttribArray(texCoord)
+
+
+   
+
+    const sam=gl.getUniformLocation(program,"u_Sampler")
+    const img=new Image()
+    img.src='img.png'
+    img.onload=()=>{texture(gl,img,sam)}
+
+    
+    
+   
+}
+
+ /**创建缓冲区textureBuffer，传入图片纹理数据，然后执行绘制方法drawArrays() **/
+
+function texture(gl: WebGLRenderingContext,image:TexImageSource,sam: WebGLUniformLocation){
+    const texture=gl.createTexture()//创建纹理图像缓冲区
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)//纹理图片上下反转
+    gl.activeTexture(gl.TEXTURE0)//激活0号纹理单元TEXTURE0
+    gl.bindTexture(gl.TEXTURE_2D,texture)//绑定纹理缓冲区
+    //设置纹理贴图填充方式（纹理贴图像素尺寸大于顶点绘制区域像素尺寸）
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR)
+     //设置纹理贴图填充方式(纹理贴图像素尺寸小于顶点绘制区域像素尺寸)
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
+    //设置纹素格式，jpg格式对应gl.RGB
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image)
+    gl.uniform1i(sam,0)//纹理缓冲区单元TEXTURE0中的颜色数据传入片元着色器
+      // 进行绘制
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
 // learn1()
 // learn2()
 // learn3()
 // learn4()
-learn5()
+// learn5()
+learn6()

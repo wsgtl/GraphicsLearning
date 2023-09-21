@@ -25,6 +25,18 @@ function initShader(gl, vShaderSource, fShaderSource) {
     gl.useProgram(program); // 告诉 WebGL 用这个 program 进行渲染
     return program;
 }
+/**传顶点数据 */
+function setData(gl, program, name, data, size, type, normalized, stride, offset) {
+    if (normalized === void 0) { normalized = false; }
+    if (stride === void 0) { stride = 0; }
+    if (offset === void 0) { offset = 0; }
+    var arg = gl.getAttribLocation(program, name);
+    var pb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(arg, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(arg);
+}
 /**默认顶点着色器文本 */
 var DefVertexShader = "\n    attribute vec4 v_position;\n\n    void main(){\n        gl_Position=v_position;\n    }\n";
 /**默认片元着色器文本 */
@@ -196,7 +208,7 @@ function learn4() {
     };
     t();
 }
-/**练习5 立方体添加光源 */
+/**练习5 立方体添加光源和gl_FragCoord练习*/
 function learn5() {
     var gl = initWebgl();
     var program = initShader(gl, "\n    attribute vec4 v_position;\n    uniform vec3 u_angle;\n    uniform vec4 a_color;// attribute\u58F0\u660E\u9876\u70B9\u989C\u8272\u53D8\u91CF\n    attribute vec4 a_normal;//\u9876\u70B9\u6CD5\u5411\u91CF\u53D8\u91CF\n    uniform vec3 u_lightColor;// uniform\u58F0\u660E\u5E73\u884C\u5149\u989C\u8272\u53D8\u91CF\n    uniform vec3 u_lightPosition;// uniform\u58F0\u660E\u5E73\u884C\u5149\u989C\u8272\u53D8\u91CF\n    varying vec4 v_color;//varying\u58F0\u660E\u9876\u70B9\u989C\u8272\u63D2\u503C\u540E\u53D8\u91CF\n\n    mat4 getMat(float angle,int mode){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(angle);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n    }\n    void main(){\n        mat4 m4x=getMat(u_angle.x,0);\n        mat4 m4y=getMat(u_angle.y,1);\n        gl_Position=m4x*m4y*v_position;\n\n        // \u9876\u70B9\u6CD5\u5411\u91CF\u8FDB\u884C\u77E9\u9635\u53D8\u6362\uFF0C\u7136\u540E\u5F52\u4E00\u5316\n        vec3 normal = normalize((m4x*m4y*a_normal).xyz);\n        // \u8BA1\u7B97\u70B9\u5149\u6E90\u7167\u5C04\u9876\u70B9\u7684\u65B9\u5411\u5E76\u5F52\u4E00\u5316\n        vec3 lightDirection = normalize(vec3(gl_Position) - u_lightPosition);   \n        // \u8BA1\u7B97\u5E73\u884C\u5149\u65B9\u5411\u5411\u91CF\u548C\u9876\u70B9\u6CD5\u5411\u91CF\u7684\u70B9\u79EF\n        float dot=max(dot(lightDirection,normal),0.0);\n        // \u8BA1\u7B97\u53CD\u5C04\u540E\u7684\u989C\u8272\n        vec3 reflectedLight = u_lightColor*a_color.rgb*dot;\n        //\u989C\u8272\u63D2\u503C\u8BA1\u7B97\n        v_color=vec4(reflectedLight,a_color.a);\n    }\n   \n    ", "\n    precision mediump float;\n    varying vec4 v_color;\n    void main(){\n        if(gl_FragCoord.x < 200.0){\n            // canvas\u753B\u5E03\u4E0A[0,300)\u4E4B\u95F4\u7247\u5143\u50CF\u7D20\u503C\u8BBE\u7F6E\n            gl_FragColor = v_color+vec4(-.2,.8,.4,-.2);\n            return;\n        }\n        if(gl_FragCoord.y < 200.0){\n            // canvas\u753B\u5E03\u4E0A[0,300)\u4E4B\u95F4\u7247\u5143\u50CF\u7D20\u503C\u8BBE\u7F6E\n            gl_FragColor = v_color+vec4(-.4,.2,.4,-.2);\n            return;\n        }\n        gl_FragColor=v_color;\n    }\n");
@@ -256,12 +268,70 @@ function learn5() {
         gl.clearColor(.2, .3, .4, .5); //每一帧都要刷新背景颜色
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLES, 0, 36); //每一帧都要重绘
+        // gl.uniform3f(angle,50,angleY+10,0)
+        // gl.drawArrays(gl.TRIANGLES,0,36)//画另一个立方体
         window.requestAnimationFrame(function () { t(); });
     };
     t();
+}
+/**练习6 纹理贴图和调整灰度 */
+function learn6() {
+    var gl = initWebgl();
+    var isGrey = true;
+    var fShader = (isGrey ? " #define GREY true;\n" : "") +
+        "\n    precision mediump float;\n    varying vec2 v_TexCoord;\n    uniform sampler2D u_Sampler;\n    void main(){\n        #ifdef GREY\n        //\u91C7\u96C6\u7EB9\u7D20\n        vec4 texture = texture2D(u_Sampler,v_TexCoord);\n        //\u8BA1\u7B97RGB\u4E09\u4E2A\u5206\u91CF\u5149\u80FD\u91CF\u4E4B\u548C\uFF0C\u4E5F\u5C31\u662F\u4EAE\u5EA6\n        float luminance = 0.299*texture.r+0.587*texture.g+0.114*texture.b;\n        //\u9010\u7247\u5143\u8D4B\u503C\uFF0CRGB\u76F8\u540C\u5747\u4E3A\u4EAE\u5EA6\u503C\uFF0C\u7528\u9ED1\u767D\u4E24\u8272\u8868\u8FBE\u56FE\u7247\u7684\u660E\u6697\u53D8\u5316\n        gl_FragColor = vec4(luminance,luminance,luminance,texture.a);\n        return;\n        #endif\n\n        gl_FragColor = texture2D(u_Sampler,v_TexCoord);\n    }\n";
+    var program = initShader(gl, "\n    attribute vec4 v_position;\n    attribute vec2 a_TexCoord;//\u7EB9\u7406\u5750\u6807\n    varying vec2 v_TexCoord;\n    void main(){\n        gl_Position=v_position;\n        v_TexCoord=a_TexCoord;\n    }\n    ", fShader);
+    //  四个顶点坐标数据data，z轴为零
+    //   定义纹理贴图在WebGL坐标系中位置
+    var data = new Float32Array([
+        -0.5, 0.5,
+        -0.5, -0.5,
+        0.5, 0.5,
+        0.5, -0.5 //右下角——v3
+    ]);
+    //创建UV纹理坐标数据textureData
+    var textureData = new Float32Array([
+        0, 1,
+        0, 0,
+        1, 1,
+        1, 0 //右下角——uv3
+    ]);
+    var position = gl.getAttribLocation(program, 'v_position');
+    var texCoord = gl.getAttribLocation(program, 'a_TexCoord');
+    var pb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position);
+    var tpb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, tpb);
+    gl.bufferData(gl.ARRAY_BUFFER, textureData, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(texCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(texCoord);
+    var sam = gl.getUniformLocation(program, "u_Sampler");
+    var img = new Image();
+    img.src = 'img.png';
+    img.onload = function () { texture(gl, img, sam); };
+}
+/**创建缓冲区textureBuffer，传入图片纹理数据，然后执行绘制方法drawArrays() **/
+function texture(gl, image, sam) {
+    var texture = gl.createTexture(); //创建纹理图像缓冲区
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); //纹理图片上下反转
+    gl.activeTexture(gl.TEXTURE0); //激活0号纹理单元TEXTURE0
+    gl.bindTexture(gl.TEXTURE_2D, texture); //绑定纹理缓冲区
+    //设置纹理贴图填充方式（纹理贴图像素尺寸大于顶点绘制区域像素尺寸）
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    //设置纹理贴图填充方式(纹理贴图像素尺寸小于顶点绘制区域像素尺寸)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    //设置纹素格式，jpg格式对应gl.RGB
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.uniform1i(sam, 0); //纹理缓冲区单元TEXTURE0中的颜色数据传入片元着色器
+    // 进行绘制
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 // learn1()
 // learn2()
 // learn3()
 // learn4()
-learn5();
+// learn5()
+learn6();
