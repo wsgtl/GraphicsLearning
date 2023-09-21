@@ -148,7 +148,7 @@ function learn3() {
 /**练习4 立方体上不同颜色并旋转 */
 function learn4() {
     var gl = initWebgl();
-    var program = initShader(gl, "\n    attribute vec4 v_position;\n    attribute vec3 a_color;\n    uniform vec3 u_angle;\n    varying vec3 v_color;\n    mat4 getMat(float angle,int mode){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(angle);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n    }\n    void main(){\n        mat4 m4x=getMat(u_angle.x,0);\n        mat4 m4y=getMat(u_angle.y,1);\n        gl_Position=m4x*m4y*v_position;\n        v_color=a_color;\n    }\n   \n    ", "\n    precision mediump float;\n    varying vec3 v_color;\n    void main(){\n        gl_FragColor=vec4(v_color,1.) ;\n    }\n");
+    var program = initShader(gl, "\n    attribute vec4 v_position;\n    attribute vec3 a_color;\n    uniform vec3 u_angle;\n    varying vec3 v_color;\n    mat4 getMat(float angle,int mode){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(angle);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n    }\n    void main(){\n        mat4 m4x=getMat(u_angle.x,0);\n        mat4 m4y=getMat(u_angle.y,1);\n        mat4 m4s=mat4(1,0,0,0, 0,.8,0,0, 0,0,1,0, 0,0,0,1);\n        gl_Position=m4s*m4x*m4y*v_position;\n        v_color=a_color;\n    }\n   \n    ", "\n    precision mediump float;\n    varying vec3 v_color;\n    void main(){\n        gl_FragColor=vec4(v_color,1.) ;\n    }\n");
     /**
      创建顶点位置数据数组data,Javascript中小数点前面的0可以省略
      **/
@@ -188,10 +188,74 @@ function learn4() {
         var all = 10 * 1000;
         var angleY = (Date.now() % all) / all * 360;
         var angle = gl.getUniformLocation(program, "u_angle");
-        gl.uniform3f(angle, angleY / 10, angleY, 0);
-        gl.clearColor(.2, .3, .4, .5);
+        gl.uniform3f(angle, 30, angleY, 0);
+        gl.clearColor(.2, .3, .4, .5); //每一帧都要刷新背景颜色
         gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 36);
+        gl.drawArrays(gl.TRIANGLES, 0, 36); //每一帧都要重绘
+        window.requestAnimationFrame(function () { t(); });
+    };
+    t();
+}
+/**练习5 立方体添加光源 */
+function learn5() {
+    var gl = initWebgl();
+    var program = initShader(gl, "\n    attribute vec4 v_position;\n    uniform vec3 u_angle;\n    uniform vec4 a_color;// attribute\u58F0\u660E\u9876\u70B9\u989C\u8272\u53D8\u91CF\n    attribute vec4 a_normal;//\u9876\u70B9\u6CD5\u5411\u91CF\u53D8\u91CF\n    uniform vec3 u_lightColor;// uniform\u58F0\u660E\u5E73\u884C\u5149\u989C\u8272\u53D8\u91CF\n    uniform vec3 u_lightPosition;// uniform\u58F0\u660E\u5E73\u884C\u5149\u989C\u8272\u53D8\u91CF\n    varying vec4 v_color;//varying\u58F0\u660E\u9876\u70B9\u989C\u8272\u63D2\u503C\u540E\u53D8\u91CF\n\n    mat4 getMat(float angle,int mode){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(angle);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n    }\n    void main(){\n        mat4 m4x=getMat(u_angle.x,0);\n        mat4 m4y=getMat(u_angle.y,1);\n        gl_Position=m4x*m4y*v_position;\n\n        // \u9876\u70B9\u6CD5\u5411\u91CF\u8FDB\u884C\u77E9\u9635\u53D8\u6362\uFF0C\u7136\u540E\u5F52\u4E00\u5316\n        vec3 normal = normalize((m4x*m4y*a_normal).xyz);\n        // \u8BA1\u7B97\u70B9\u5149\u6E90\u7167\u5C04\u9876\u70B9\u7684\u65B9\u5411\u5E76\u5F52\u4E00\u5316\n        vec3 lightDirection = normalize(vec3(gl_Position) - u_lightPosition);   \n        // \u8BA1\u7B97\u5E73\u884C\u5149\u65B9\u5411\u5411\u91CF\u548C\u9876\u70B9\u6CD5\u5411\u91CF\u7684\u70B9\u79EF\n        float dot=max(dot(lightDirection,normal),0.0);\n        // \u8BA1\u7B97\u53CD\u5C04\u540E\u7684\u989C\u8272\n        vec3 reflectedLight = u_lightColor*a_color.rgb*dot;\n        //\u989C\u8272\u63D2\u503C\u8BA1\u7B97\n        v_color=vec4(reflectedLight,a_color.a);\n    }\n   \n    ", "\n    precision mediump float;\n    varying vec4 v_color;\n    void main(){\n        if(gl_FragCoord.x < 200.0){\n            // canvas\u753B\u5E03\u4E0A[0,300)\u4E4B\u95F4\u7247\u5143\u50CF\u7D20\u503C\u8BBE\u7F6E\n            gl_FragColor = v_color+vec4(-.2,.8,.4,-.2);\n            return;\n        }\n        if(gl_FragCoord.y < 200.0){\n            // canvas\u753B\u5E03\u4E0A[0,300)\u4E4B\u95F4\u7247\u5143\u50CF\u7D20\u503C\u8BBE\u7F6E\n            gl_FragColor = v_color+vec4(-.4,.2,.4,-.2);\n            return;\n        }\n        gl_FragColor=v_color;\n    }\n");
+    /**
+     创建顶点位置数据数组data,Javascript中小数点前面的0可以省略
+     **/
+    var data = new Float32Array([
+        .5, .5, .5, -.5, .5, .5, -.5, -.5, .5, .5, .5, .5, -.5, -.5, .5, .5, -.5, .5,
+        .5, .5, .5, .5, -.5, .5, .5, -.5, -.5, .5, .5, .5, .5, -.5, -.5, .5, .5, -.5,
+        .5, .5, .5, .5, .5, -.5, -.5, .5, -.5, .5, .5, .5, -.5, .5, -.5, -.5, .5, .5,
+        -.5, .5, .5, -.5, .5, -.5, -.5, -.5, -.5, -.5, .5, .5, -.5, -.5, -.5, -.5, -.5, .5,
+        -.5, -.5, -.5, .5, -.5, -.5, .5, -.5, .5, -.5, -.5, -.5, .5, -.5, .5, -.5, -.5, .5,
+        .5, -.5, -.5, -.5, -.5, -.5, -.5, .5, -.5, .5, -.5, -.5, -.5, .5, -.5, .5, .5, -.5 //面6
+    ]);
+    var position = gl.getAttribLocation(program, 'v_position');
+    var pb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position);
+    /**
+     *顶点法向量数组normalData
+    **/
+    var normalData = new Float32Array([
+        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1 //z轴负方向——面6
+    ]);
+    var normal = gl.getAttribLocation(program, 'a_normal');
+    var npb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, npb);
+    gl.bufferData(gl.ARRAY_BUFFER, normalData, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(normal);
+    var color = gl.getUniformLocation(program, "a_color");
+    gl.uniform4f(color, 1, 0, 0, 1);
+    var u_lightColor = gl.getUniformLocation(program, 'u_lightColor');
+    var u_lightPosition = gl.getUniformLocation(program, 'u_lightPosition');
+    /**
+     * 给平行光传入颜色和方向数据，RGB(1,1,1),单位向量(x,y,z)
+     **/
+    gl.uniform3f(u_lightColor, 1.0, 1.0, 1.0);
+    //保证向量(x,y,-z)的长度为1，即单位向量
+    // 如果不是单位向量，也可以再来着色器代码中进行归一化
+    // var x = -1/Math.sqrt(14), y = -2/Math.sqrt(14), z = -3/Math.sqrt(14);
+    var x = -1 / Math.sqrt(3), y = -1 / Math.sqrt(3), z = -1 / Math.sqrt(3);
+    gl.uniform3f(u_lightPosition, x, y, -z);
+    gl.enable(gl.DEPTH_TEST);
+    var t = function () {
+        var all = 10 * 1000;
+        var angleY = (Date.now() % all) / all * 360;
+        var angle = gl.getUniformLocation(program, "u_angle");
+        gl.uniform3f(angle, 30, angleY, 0);
+        gl.clearColor(.2, .3, .4, .5); //每一帧都要刷新背景颜色
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 36); //每一帧都要重绘
         window.requestAnimationFrame(function () { t(); });
     };
     t();
@@ -199,4 +263,5 @@ function learn4() {
 // learn1()
 // learn2()
 // learn3()
-learn4();
+// learn4()
+learn5();

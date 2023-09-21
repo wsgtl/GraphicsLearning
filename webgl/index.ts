@@ -235,7 +235,8 @@ function learn4(){
     void main(){
         mat4 m4x=getMat(u_angle.x,0);
         mat4 m4y=getMat(u_angle.y,1);
-        gl_Position=m4x*m4y*v_position;
+        mat4 m4s=mat4(1,0,0,0, 0,.8,0,0, 0,0,1,0, 0,0,0,1);
+        gl_Position=m4s*m4x*m4y*v_position;
         v_color=a_color;
     }
    
@@ -293,7 +294,7 @@ var colorData = new Float32Array([
         const all=10*1000;
         const angleY=(Date.now()%all)/all*360
         const angle=gl.getUniformLocation(program,"u_angle")
-        gl.uniform3f(angle,angleY/10,angleY,0)
+        gl.uniform3f(angle,30,angleY,0)
         gl.clearColor(.2, .3, .4, .5)//每一帧都要刷新背景颜色
         gl.clear(gl.COLOR_BUFFER_BIT)
         gl.drawArrays(gl.TRIANGLES,0,36)//每一帧都要重绘
@@ -307,11 +308,136 @@ var colorData = new Float32Array([
    
 }
 
+/**练习5 立方体添加光源和gl_FragCoord练习*/
+function learn5(){
+    const gl = initWebgl()
+    const program = initShader(gl, `
+    attribute vec4 v_position;
+    uniform vec3 u_angle;
+    uniform vec4 a_color;// attribute声明顶点颜色变量
+    attribute vec4 a_normal;//顶点法向量变量
+    uniform vec3 u_lightColor;// uniform声明平行光颜色变量
+    uniform vec3 u_lightPosition;// uniform声明平行光颜色变量
+    varying vec4 v_color;//varying声明顶点颜色插值后变量
+
+    mat4 getMat(float angle,int mode){
+        //设置几何体轴旋转角度为30度，并把角度值转化为弧度值
+        float radian = radians(angle);
+        //求解旋转角度余弦值
+        float cos = cos(radian);
+        //求解旋转角度正弦值
+        float sin = sin(radian);
+        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);
+        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);
+        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);
+    }
+    void main(){
+        mat4 m4x=getMat(u_angle.x,0);
+        mat4 m4y=getMat(u_angle.y,1);
+        gl_Position=m4x*m4y*v_position;
+
+        // 顶点法向量进行矩阵变换，然后归一化
+        vec3 normal = normalize((m4x*m4y*a_normal).xyz);
+        // 计算点光源照射顶点的方向并归一化
+        vec3 lightDirection = normalize(vec3(gl_Position) - u_lightPosition);   
+        // 计算平行光方向向量和顶点法向量的点积
+        float dot=max(dot(lightDirection,normal),0.0);
+        // 计算反射后的颜色
+        vec3 reflectedLight = u_lightColor*a_color.rgb*dot;
+        //颜色插值计算
+        v_color=vec4(reflectedLight,a_color.a);
+    }
+   
+    `,  `
+    precision mediump float;
+    varying vec4 v_color;
+    void main(){
+        if(gl_FragCoord.x < 200.0){
+            // canvas画布上[0,300)之间片元像素值设置
+            gl_FragColor = v_color+vec4(-.2,.8,.4,-.2);
+            return;
+        }
+        if(gl_FragCoord.y < 200.0){
+            // canvas画布上[0,300)之间片元像素值设置
+            gl_FragColor = v_color+vec4(-.4,.2,.4,-.2);
+            return;
+        }
+        gl_FragColor=v_color;
+    }
+`)
+   
+/**
+ 创建顶点位置数据数组data,Javascript中小数点前面的0可以省略
+ **/
+ var data=new Float32Array([
+    .5,.5,.5,-.5,.5,.5,-.5,-.5,.5,.5,.5,.5,-.5,-.5,.5,.5,-.5,.5,      //面1
+    .5,.5,.5,.5,-.5,.5,.5,-.5,-.5,.5,.5,.5,.5,-.5,-.5,.5,.5,-.5,      //面2
+    .5,.5,.5,.5,.5,-.5,-.5,.5,-.5,.5,.5,.5,-.5,.5,-.5,-.5,.5,.5,      //面3
+    -.5,.5,.5,-.5,.5,-.5,-.5,-.5,-.5,-.5,.5,.5,-.5,-.5,-.5,-.5,-.5,.5,//面4
+    -.5,-.5,-.5,.5,-.5,-.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,.5,-.5,-.5,.5,//面5
+    .5,-.5,-.5,-.5,-.5,-.5,-.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,.5,.5,-.5 //面6
+]);
+
+    const position = gl.getAttribLocation(program, 'v_position')
+    const pb = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb)
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(position)
+
+    /**
+     *顶点法向量数组normalData
+    **/
+    var normalData = new Float32Array([
+        0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,//z轴正方向——面1
+        1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,//x轴正方向——面2
+        0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,//y轴正方向——面3
+        -1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,//x轴负方向——面4
+        0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,//y轴负方向——面5
+        0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1//z轴负方向——面6
+    ]);
+    const normal = gl.getAttribLocation(program, 'a_normal')
+    const npb = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, npb)
+    gl.bufferData(gl.ARRAY_BUFFER, normalData, gl.STATIC_DRAW)
+    gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(normal)
 
 
+    const color = gl.getUniformLocation(program, "a_color")
+    gl.uniform4f(color,1,0,0,1)
+  
+    var u_lightColor = gl.getUniformLocation(program,'u_lightColor');
+    var u_lightPosition = gl.getUniformLocation(program,'u_lightPosition');
+    /**
+     * 给平行光传入颜色和方向数据，RGB(1,1,1),单位向量(x,y,z)
+     **/
+    gl.uniform3f(u_lightColor, 1.0, 1.0, 1.0);
+    //保证向量(x,y,-z)的长度为1，即单位向量
+    // 如果不是单位向量，也可以再来着色器代码中进行归一化
+    // var x = -1/Math.sqrt(14), y = -2/Math.sqrt(14), z = -3/Math.sqrt(14);
+    var x = -1/Math.sqrt(3), y = -1/Math.sqrt(3), z = -1/Math.sqrt(3);
+    gl.uniform3f(u_lightPosition,x,y,-z);
+
+    gl.enable(gl.DEPTH_TEST)
+    const t=()=>{
+        const all=10*1000;
+        const angleY=(Date.now()%all)/all*360
+        const angle=gl.getUniformLocation(program,"u_angle")
+        gl.uniform3f(angle,30,angleY,0)
+        gl.clearColor(.2, .3, .4, .5)//每一帧都要刷新背景颜色
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        gl.drawArrays(gl.TRIANGLES,0,36)//每一帧都要重绘
+        window.requestAnimationFrame(()=>{t()})
+    }
+    t();
+   
+
+}
 
 
 // learn1()
 // learn2()
 // learn3()
-learn4()
+// learn4()
+learn5()
