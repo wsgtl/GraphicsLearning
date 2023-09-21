@@ -89,7 +89,7 @@ function learn2() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
-/**练习3 立方体旋转和顶点索引回执 */
+/**练习3 立方体旋转和顶点索引绘制 */
 function learn3() {
     var gl = initWebgl();
     var program = initShader(gl, "\n    attribute vec4 v_position;\n    void main(){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(30.0);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        mat4 m4x=mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        mat4 m4y=mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        mat4 m4z=mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n        gl_Position=m4z*m4x*m4y*v_position;\n        // gl_Position=m4z*v_position;\n    }\n    ", DefFragmentSHader);
@@ -131,7 +131,72 @@ function learn3() {
     gl.drawElements(gl.LINE_LOOP, 4, gl.UNSIGNED_BYTE, 0); //LINE_LOOP模式绘制前四个点
     gl.drawElements(gl.LINE_LOOP, 4, gl.UNSIGNED_BYTE, 4); //LINE_LOOP模式从第五个点开始绘制四个点
     gl.drawElements(gl.LINES, 8, gl.UNSIGNED_BYTE, 8); //LINES模式绘制后8个点
+    //  //创建顶点索引数组
+    //  const indexes = new Uint8Array([
+    //     0,1,2, 0,2,3,//正面
+    //     4,5,6, 4,6,7,//背面
+    //     0,3,4, 3,4,7,//右面
+    //     0,1,4, 1,4,5,//上面
+    //     1,2,5, 2,5,6,//左面
+    //     2,3,6, 3,6,7,//下面
+    //  ])
+    //  const ipb=gl.createBuffer()
+    //  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ipb)
+    //  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indexes,gl.STATIC_DRAW)
+    //  gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_BYTE,0)
+}
+/**练习4 立方体上不同颜色并旋转 */
+function learn4() {
+    var gl = initWebgl();
+    var program = initShader(gl, "\n    attribute vec4 v_position;\n    attribute vec3 a_color;\n    uniform vec3 u_angle;\n    varying vec3 v_color;\n    mat4 getMat(float angle,int mode){\n        //\u8BBE\u7F6E\u51E0\u4F55\u4F53\u8F74\u65CB\u8F6C\u89D2\u5EA6\u4E3A30\u5EA6\uFF0C\u5E76\u628A\u89D2\u5EA6\u503C\u8F6C\u5316\u4E3A\u5F27\u5EA6\u503C\n        float radian = radians(angle);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u4F59\u5F26\u503C\n        float cos = cos(radian);\n        //\u6C42\u89E3\u65CB\u8F6C\u89D2\u5EA6\u6B63\u5F26\u503C\n        float sin = sin(radian);\n        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);\n        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);\n        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);\n    }\n    void main(){\n        mat4 m4x=getMat(u_angle.x,0);\n        mat4 m4y=getMat(u_angle.y,1);\n        gl_Position=m4x*m4y*v_position;\n        v_color=a_color;\n    }\n   \n    ", "\n    precision mediump float;\n    varying vec3 v_color;\n    void main(){\n        gl_FragColor=vec4(v_color,1.) ;\n    }\n");
+    /**
+     创建顶点位置数据数组data,Javascript中小数点前面的0可以省略
+     **/
+    var data = new Float32Array([
+        .5, .5, .5, -.5, .5, .5, -.5, -.5, .5, .5, .5, .5, -.5, -.5, .5, .5, -.5, .5,
+        .5, .5, .5, .5, -.5, .5, .5, -.5, -.5, .5, .5, .5, .5, -.5, -.5, .5, .5, -.5,
+        .5, .5, .5, .5, .5, -.5, -.5, .5, -.5, .5, .5, .5, -.5, .5, -.5, -.5, .5, .5,
+        -.5, .5, .5, -.5, .5, -.5, -.5, -.5, -.5, -.5, .5, .5, -.5, -.5, -.5, -.5, -.5, .5,
+        -.5, -.5, -.5, .5, -.5, -.5, .5, -.5, .5, -.5, -.5, -.5, .5, -.5, .5, -.5, -.5, .5,
+        .5, -.5, -.5, -.5, -.5, -.5, -.5, .5, -.5, .5, -.5, -.5, -.5, .5, -.5, .5, .5, -.5 //面6
+    ]);
+    /**
+     创建顶点颜色数组colorData
+     **/
+    var colorData = new Float32Array([
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+        1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 //白色——面6
+    ]);
+    var position = gl.getAttribLocation(program, 'v_position');
+    var pb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(position);
+    var color = gl.getAttribLocation(program, "a_color");
+    var cpb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, cpb);
+    gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.STREAM_DRAW);
+    gl.vertexAttribPointer(color, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(color);
+    gl.enable(gl.DEPTH_TEST);
+    var t = function () {
+        var all = 10 * 1000;
+        var angleY = (Date.now() % all) / all * 360;
+        var angle = gl.getUniformLocation(program, "u_angle");
+        gl.uniform3f(angle, angleY / 10, angleY, 0);
+        gl.clearColor(.2, .3, .4, .5);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 36);
+        window.requestAnimationFrame(function () { t(); });
+    };
+    t();
 }
 // learn1()
 // learn2()
-learn3();
+// learn3()
+learn4();

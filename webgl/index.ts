@@ -197,8 +197,115 @@ function learn3() {
     gl.drawElements(gl.LINE_LOOP, 4, gl.UNSIGNED_BYTE, 4)//LINE_LOOP模式从第五个点开始绘制四个点
     gl.drawElements(gl.LINES,8,gl.UNSIGNED_BYTE,8)//LINES模式绘制后8个点
 
+    //  //创建顶点索引数组
+    //  const indexes = new Uint8Array([
+    //     0,1,2, 0,2,3,//正面
+    //     4,5,6, 4,6,7,//背面
+    //     0,3,4, 3,4,7,//右面
+    //     0,1,4, 1,4,5,//上面
+    //     1,2,5, 2,5,6,//左面
+    //     2,3,6, 3,6,7,//下面
+ 
+    //  ])
+    //  const ipb=gl.createBuffer()
+    //  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ipb)
+    //  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indexes,gl.STATIC_DRAW)
+    //  gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_BYTE,0)
 }
 
+/**练习4 立方体上不同颜色并旋转 */
+function learn4(){
+    const gl = initWebgl()
+    const program = initShader(gl, `
+    attribute vec4 v_position;
+    attribute vec3 a_color;
+    uniform vec3 u_angle;
+    varying vec3 v_color;
+    mat4 getMat(float angle,int mode){
+        //设置几何体轴旋转角度为30度，并把角度值转化为弧度值
+        float radian = radians(angle);
+        //求解旋转角度余弦值
+        float cos = cos(radian);
+        //求解旋转角度正弦值
+        float sin = sin(radian);
+        if(mode==0)return mat4(1,0,0,0,  0,cos,-sin,0, 0,sin,cos,0, 0,0,0,1);
+        if(mode==1)return mat4(cos,0,sin,0,  0,1,0,0, -sin,0,cos,0, 0,0,0,1);
+        if(mode==2)return mat4(cos,-sin,0,0,  sin,cos,0,0, 0,0,0,0, 0,0,0,1);
+    }
+    void main(){
+        mat4 m4x=getMat(u_angle.x,0);
+        mat4 m4y=getMat(u_angle.y,1);
+        gl_Position=m4x*m4y*v_position;
+        v_color=a_color;
+    }
+   
+    `,  `
+    precision mediump float;
+    varying vec3 v_color;
+    void main(){
+        gl_FragColor=vec4(v_color,1.) ;
+    }
+`)
+   
+/**
+ 创建顶点位置数据数组data,Javascript中小数点前面的0可以省略
+ **/
+ var data=new Float32Array([
+    .5,.5,.5,-.5,.5,.5,-.5,-.5,.5,.5,.5,.5,-.5,-.5,.5,.5,-.5,.5,      //面1
+    .5,.5,.5,.5,-.5,.5,.5,-.5,-.5,.5,.5,.5,.5,-.5,-.5,.5,.5,-.5,      //面2
+    .5,.5,.5,.5,.5,-.5,-.5,.5,-.5,.5,.5,.5,-.5,.5,-.5,-.5,.5,.5,      //面3
+    -.5,.5,.5,-.5,.5,-.5,-.5,-.5,-.5,-.5,.5,.5,-.5,-.5,-.5,-.5,-.5,.5,//面4
+    -.5,-.5,-.5,.5,-.5,-.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,.5,-.5,-.5,.5,//面5
+    .5,-.5,-.5,-.5,-.5,-.5,-.5,.5,-.5,.5,-.5,-.5,-.5,.5,-.5,.5,.5,-.5 //面6
+]);
+/**
+ 创建顶点颜色数组colorData
+ **/
+var colorData = new Float32Array([
+    1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0,//红色——面1
+    0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0,//绿色——面2
+    0,0,1, 0,0,1, 0,0,1, 0,0,1, 0,0,1, 0,0,1,//蓝色——面3
+    1,1,0, 1,1,0, 1,1,0, 1,1,0, 1,1,0, 1,1,0,//黄色——面4
+    0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0,//黑色——面5
+    1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1, 1,1,1 //白色——面6
+]);
+
+    const position = gl.getAttribLocation(program, 'v_position')
+    const pb = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, pb)
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW)
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0)
+    gl.enableVertexAttribArray(position)
+
+    
+
+    const color = gl.getAttribLocation(program, "a_color")
+    const cpb=gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER,cpb)
+    gl.bufferData(gl.ARRAY_BUFFER,colorData,gl.STREAM_DRAW)
+    gl.vertexAttribPointer(color,3,gl.FLOAT,false,0,0)
+    gl.enableVertexAttribArray(color)
+
+  
+
+    gl.enable(gl.DEPTH_TEST)
+    const t=()=>{
+        const all=10*1000;
+        const angleY=(Date.now()%all)/all*360
+        const angle=gl.getUniformLocation(program,"u_angle")
+        gl.uniform3f(angle,angleY/10,angleY,0)
+        gl.clearColor(.2, .3, .4, .5)//每一帧都要刷新背景颜色
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        gl.drawArrays(gl.TRIANGLES,0,36)//每一帧都要重绘
+        window.requestAnimationFrame(()=>{t()})
+    }
+    t();
+   
+
+   
+   
+   
+}
 
 
 
@@ -206,4 +313,5 @@ function learn3() {
 
 // learn1()
 // learn2()
-learn3()
+// learn3()
+learn4()
