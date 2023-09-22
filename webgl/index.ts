@@ -441,7 +441,7 @@ function learn5(){
 
         // gl.uniform3f(angle,50,angleY+10,0)
         // gl.drawArrays(gl.TRIANGLES,0,36)//画另一个立方体
-
+        
         window.requestAnimationFrame(()=>{t()})
     }
     t();
@@ -536,15 +536,52 @@ function learn6(){
 function texture(gl: WebGLRenderingContext,image:TexImageSource,sam: WebGLUniformLocation){
     const texture=gl.createTexture()//创建纹理图像缓冲区
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)//纹理图片上下反转
+    // gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,1)//将图像RGB颜色值的每一个分量乘以A默认值为false	
     gl.activeTexture(gl.TEXTURE0)//激活0号纹理单元TEXTURE0
     gl.bindTexture(gl.TEXTURE_2D,texture)//绑定纹理缓冲区
     //设置纹理贴图填充方式（纹理贴图像素尺寸大于顶点绘制区域像素尺寸）
+    // target		gl.TEXTURE_2D或gl.TEXTURE_BUVE_MAP
+    //             分别代表二维纹理和立方体纹理
+    // pname		纹理参数，可选值：
+    //             gl.TEXTURE_MAG_FILTER 纹理放大方法，默认值gl.LINEAR
+    //             gl.TEXTURE_MIN_FILTER 纹理缩小方法，默认值gl.NEAREST_MIPMAP_LINEAR
+    //             gl.TEXTURE_WRAP_S	  纹理水平填充，默认值gl.REPEAT
+    //             gl.TEXTURE_WRAP_T     纹理垂直填充，默认值gl.REPEAT
+    // param		纹理参数的值，
+    //             当pname为gl.TEXTURE_MAG_FILTER或gl.TEXTURE_MIN_FILTER
+    //                 可选值：
+    //                 gl.NEAREST	使用原纹理上距离映射后像素（新像素）中心最近的那个
+    //                             像素的颜色值，作为新像素的值
+    //                 gl.LINEAR	使用距离新像素中心最近的四个像素的颜色的加权平均值，
+    //                             作为新像素的值，图像效果更好，但开销较大
+    //             当pname为gl.TEXTURE_WRAP_S或gl.TEXTURE_WRAP_T
+    //                 可选值：
+    //                 gl.REPEAT			平铺式的重复纹理
+    //                 gl.MIRRORED_REPEAT	镜像对称式的重复纹理
+    //                 gl.CLAMP_TO_EDGE	使用纹理图像边缘值				
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR)
      //设置纹理贴图填充方式(纹理贴图像素尺寸小于顶点绘制区域像素尺寸)
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
     //设置纹素格式，jpg格式对应gl.RGB
+    // target			gl.TEXTURE_2D或gl.TEXTURE_BUVE_MAP
+    // 分别代表二维纹理和立方体纹理
+    // level			传入0 （该参数用于金字塔纹理）
+    // internalformat	图像的内部格式，可选值：
+    //     gl.RGB	红、绿、蓝
+    //     gl.RGBA	红、绿、蓝、透明度
+    //     gl.ALPHA （0.0,0.0,0.0，透明度）
+    //     gl.LUMINANCE  L、L、L、1L：流明
+    //     gl.LUMINANCE_ALPHA  L、L、L，透明度
+    // format			纹理数据的格式，必须使用与internalformat相同的值
+    // type			纹理数据的数据格式，可选值：
+    //     gl.UNSIGNED_TYPE  无符号整型，每个颜色分量占据1字节
+    //     gl.UNSIGNED_SHORT_5_6_5	 RGB：每个分量分别占据5、6、5比特
+    //     gl.UNSIGNED_SHORT_4_4_4_4 RGBA：每个分量都占据4比特
+    //     gl.UNSIGNED_SHORT_5_5_5_1 RGBA：每个分量分别占据5、5、5、1比特
+
+    // image			包含纹理图像的Image对象
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image)
-    gl.uniform1i(sam,0)//纹理缓冲区单元TEXTURE0中的颜色数据传入片元着色器
+    gl.uniform1i(sam,0)//纹理缓冲区单元TEXTURE0中的颜色数据传入片元着色器,跟activeTexture()中激活的几号纹理单元对应
       // 进行绘制
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
@@ -554,3 +591,16 @@ function texture(gl: WebGLRenderingContext,image:TexImageSource,sam: WebGLUnifor
 // learn4()
 // learn5()
 learn6()
+ /**创建缓冲区textureBuffer，传入图片纹理数据，然后执行绘制方法drawArrays() **/
+
+ function texture1(gl: WebGLRenderingContext,image:TexImageSource,sam: WebGLUniformLocation){
+    const tex=gl.createTexture()
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)
+    gl.activeTexture(gl.TEXTURE0)
+    gl.bindTexture(gl.TEXTURE_2D,tex)
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR)
+    gl.texParameterf(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,image)
+    gl.uniform1i(sam,0)
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
+}

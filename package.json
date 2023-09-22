@@ -1,0 +1,23 @@
+{
+  "name": "GraphicsLearning",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",  
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "canvas-test": "tsc ./canvas/index.ts",
+    "webgl-test": "tsc ./webgl/index.ts",
+    "three-test": "tsc ./three/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/three": "^0.156.0",
+    "three": "^0.156.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.3"
+  }
+}

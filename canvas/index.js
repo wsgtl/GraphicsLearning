@@ -150,13 +150,13 @@ function transformLearn(ctx) {
     ctx.restore();
     var xq = Math.sin(Math.PI / 180 * 20);
     ctx.save();
-    ctx.transform(1, xq, 0, 1, 0, 130); //斜切
+    ctx.transform(1, xq, 0, 1, 0, 130); //斜切，右下
     ctx.fillStyle = "#880";
     ctx.fillRect(0, 0, 50, 50);
     ctx.fillText("斜切1", 0, 0);
     ctx.restore();
     ctx.save();
-    ctx.transform(1, -xq, 0, 1, 60, 130); //斜切
+    ctx.transform(1, -xq, 0, 1, 60, 130); //斜切，右上
     ctx.fillStyle = "#444";
     ctx.fillRect(0, 0, 50, 50);
     ctx.fillText("斜切2", 0, 0);
