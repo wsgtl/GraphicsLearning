@@ -594,13 +594,13 @@ learn6()
  /**创建缓冲区textureBuffer，传入图片纹理数据，然后执行绘制方法drawArrays() **/
 
  function texture1(gl: WebGLRenderingContext,image:TexImageSource,sam: WebGLUniformLocation){
-    const tex=gl.createTexture()
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D,tex)
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR)
-    gl.texParameterf(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,image)
-    gl.uniform1i(sam,0)
-    gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
+   const tex=gl.createTexture()
+   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true)
+   gl.activeTexture(gl.TEXTURE0)
+   gl.bindTexture(gl.TEXTURE_2D,tex)
+   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR)
+   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR)
+   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,image)
+   gl.uniform1i(sam,0)
+   gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
 }
